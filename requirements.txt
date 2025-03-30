@@ -1,0 +1,6 @@
+streamlit
+pyspark
+kafka-python
+pymongo
+psycopg2
+sqlalchemy
