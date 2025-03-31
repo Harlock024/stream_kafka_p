@@ -1,0 +1,60 @@
+name: spark-processing
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  repository_dispatch:
+    types: [spark]
+
+jobs:
+  spark:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+
+      - name: Configurar Apache Spark
+        uses: vemonet/setup-spark@v1
+        with:
+          spark-version: '3.5.3'
+          hadoop-version: '3'
+
+      - name: Verificar instalación de Spark
+        run: spark-submit --version
+
+      - name: Descargar dataset
+        run: wget -O dataset.csv https://raw.githubusercontent.com/harlock024/stream_kafka_p/master/dataset.csv
+        
+      - name: Ejecutar procesamiento con Spark
+        run: spark-submit --master local scripts/data.py dataset.csv
+        
+      - name: Mostrar archivos generados
+        run: ls -la results  
+
+      - name: Guardar resultados en el repositorio
+        env: 
+          CI_COMMIT_MESSAGE: "Guardar resultados de Spark"
+          CI_COMMIT_AUTHOR: "harlock024"
+        run: |
+          git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
+          git config --global user.email "hadith024@gmail.com"
+          git add results
+          git commit -m "${{ env.CI_COMMIT_MESSAGE }}"
+          git push
