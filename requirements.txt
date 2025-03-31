@@ -4,3 +4,4 @@ kafka-python
 pymongo
 psycopg2
 sqlalchemy
+python-dotenv
