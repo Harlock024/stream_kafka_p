@@ -2,14 +2,22 @@ from kafka import KafkaConsumer
 import json
 from pandas.core.internals.blocks import re
 import psycopg2
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+uri = os.getenv('DATABASE_PG_URL')
+
 print('connecting pg ...')
 try:
-    conn = psycopg2.connect(database = "spotify_kafka",
-                        user = "postgres",
-                        host= 'localhost',
-                        password = "1234",
-                        port = 5432)
-    cur = conn.cursor()
+    with psycopg2.connect(uri) as conn:
+    # conn = psycopg2.connect(database = "",
+    #                     user = "postgres",
+    #                     host= 'localhost',
+    #                     password = "1234",
+    #                     port = 5432)
+        cur = conn.cursor()
     print("PosgreSql Connected successfully!")
 except:
     print("Could not connect to PosgreSql")
