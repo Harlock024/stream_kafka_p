@@ -39,16 +39,16 @@ jobs:
       - name: Verificar instalación de Spark
         run: spark-submit --version
 
-      - name: Descargar dataset
-        run: wget -O dataset.csv https://raw.githubusercontent.com/harlock024/stream_kafka_p/master/dataset.csv
-        
-      - name: Ejecutar procesamiento con Spark
-        run: spark-submit --master local scripts/data.py dataset.csv
-        
-      - name: Mostrar archivos generados
-        run: ls -la results  
-
-      - name: Guardar resultados en el repositorio
+      - run: spark-submit --version
+      - name: Download dataset
+        run: wget -O dataset.csv ${{github.event.client_payload.dataseturl}}
+      - name: Download data.py
+        run: wget -O data.py ${{github.event.client_payload.codeurl}}
+      - run: ls -la
+      - run: spark-submit --master local data.py dataset.csv
+      - run: ls -la
+      - run: ls -la results
+      - name: GIT commit and push docs
         env: 
           CI_COMMIT_MESSAGE: "Guardar resultados de Spark"
           CI_COMMIT_AUTHOR: "harlock024"
