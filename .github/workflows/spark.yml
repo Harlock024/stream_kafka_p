@@ -1,10 +1,6 @@
 name: spark-processing
 
 on:
-  # push:
-  #   branches: [ "master" ]
-  # pull_request:
-  #   branches: [ "master" ]
   repository_dispatch:
     types: [spark]
 
@@ -14,7 +10,7 @@ jobs:
 
     permissions:
       contents: write
-      
+
     steps:
       - name: Clonar repositorio
         uses: actions/checkout@v4
@@ -22,34 +18,37 @@ jobs:
       - name: Configurar Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Configurar Java
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: "21"
           distribution: temurin
 
       - name: Configurar Apache Spark
         uses: vemonet/setup-spark@v1
         with:
-          spark-version: '3.5.3'
-          hadoop-version: '3'
+          spark-version: "3.5.3"
+          hadoop-version: "3"
 
       - name: Verificar instalación de Spark
         run: spark-submit --version
 
-      - run: spark-submit --version
-      - name: Download dataset
-        run: wget -O dataset.csv ${{github.event.client_payload.dataseturl}}
-      - name: Download data.py
-        run: wget -O data.py ${{github.event.client_payload.codeurl}}
-      - run: ls -la
-      - run: spark-submit --master local data.py dataset.csv
-      - run: ls -la
-      - run: ls -la results
-      - name: GIT commit and push docs
-        env: 
+      - name: Descargar dataset
+        run: wget -O dataset.csv ${{ github.event.client_payload.dataseturl }}
+
+      - name: Descargar código Python
+        run: wget -O data.py ${{ github.event.client_payload.codeurl }}
+
+      - name: Ejecutar análisis con Spark
+        run: spark-submit --master local data.py dataset.csv
+
+      - name: Verificar resultados
+        run: ls -la results
+
+      - name: Hacer commit de resultados
+        env:
           CI_COMMIT_MESSAGE: "Guardar resultados de Spark"
           CI_COMMIT_AUTHOR: "harlock024"
         run: |
@@ -58,3 +57,17 @@ jobs:
           git add results
           git commit -m "${{ env.CI_COMMIT_MESSAGE }}"
           git push
+
+      - name: Instalar dependencias para Kafka producer
+        run: pip install kafka-python python-dotenv
+
+      - name: Crear archivo .env con secretos
+        run: |
+          echo "SERVER_BOOTSTRAP=${{ secrets.SERVER_BOOTSTRAP }}" >> .env
+          echo "SECURITY_PROTOCOL=${{ secrets.SECURITY_PROTOCOL }}" >> .env
+          echo "SASL_MECHANISM=${{ secrets.SASL_MECHANISM }}" >> .env
+          echo "SASL_USERNAME=${{ secrets.SASL_USERNAME }}" >> .env
+          echo "SASL_PASSWORD=${{ secrets.SASL_PASSWORD }}" >> .env
+
+      - name: Enviar resultados a Kafka
+        run: python produce_result.py
