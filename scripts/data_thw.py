@@ -1,10 +1,8 @@
 from pyspark.sql import SparkSession
 import json
-import os
-import pandas as pd
 
 if __name__ == "__main__":
-
+    # Crear sesión de Spark
     spark = SparkSession.builder \
         .appName("Música Processing") \
         .getOrCreate()
@@ -13,22 +11,22 @@ if __name__ == "__main__":
     path_music = "dataset.csv"
     df_music = spark.read.csv(path_music, header=True, inferSchema=True)
 
+    df_music.createOrReplaceTempView("music")
 
-    df_music = df_music.withColumnRenamed("track_name", "track_title")
+    query = """SELECT * FROM music WHERE artists = 'The Warning'"""
+    df_warning_tracks = spark.sql(query)
 
+    df_warning_tracks.show()
 
-    df_warning_tracks = df_music.filter(df_music.artists.contains("The Warning"))
+    df_warning_tracks = df_warning_tracks.coalesce(1)
 
+    df_warning_tracks.write.mode("overwrite").json("results")
 
-    df_warning_tracks.show(20)
+    results = []
+    for line in open("results/part-00000-*.json", "r"):
+        results.append(json.loads(line))
 
-
-    results = df_warning_tracks.toPandas().to_dict(orient='records')
-
-    output_file = 'results/data.json'
-    with open(output_file, 'w') as file:
+    with open('results/data.json', 'w') as file:
         json.dump(results, file)
-
-    print(f"Archivo guardado en {output_file}")
 
     spark.stop()
