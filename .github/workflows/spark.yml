@@ -57,17 +57,3 @@ jobs:
           git add results
           git commit -m "${{ env.CI_COMMIT_MESSAGE }}"
           git push
-
-      - name: Instalar dependencias para Kafka producer
-        run: pip install kafka-python python-dotenv
-
-      - name: Crear archivo .env con secretos
-        run: |
-          echo "SERVER_BOOTSTRAP=${{ secrets.SERVER_BOOTSTRAP }}" >> .env
-          echo "SECURITY_PROTOCOL=${{ secrets.SECURITY_PROTOCOL }}" >> .env
-          echo "SASL_MECHANISM=${{ secrets.SASL_MECHANISM }}" >> .env
-          echo "SASL_USERNAME=${{ secrets.SASL_USERNAME }}" >> .env
-          echo "SASL_PASSWORD=${{ secrets.SASL_PASSWORD }}" >> .env
-
-      - name: Enviar resultados a Kafka
-        run: python produce_result.py
