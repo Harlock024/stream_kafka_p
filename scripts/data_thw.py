@@ -20,7 +20,5 @@ if __name__ == "__main__":
     df_warning_tracks.show(20)
 
     # Guardar los resultados en un archivo JSON
-    df_warning_tracks.toJSON().collect()  # Convertir a JSON
-    df_warning_tracks.write.mode("overwrite").json("results")
-
+    df_warning_tracks.coalesce(1).write.mode("overwrite").json("results/data.json")
     spark.stop()
