@@ -30,13 +30,13 @@ if __name__ == "__main__":
     df_tracks_duration = spark.sql(query)
     df_tracks_duration.show(20)
 
+    query = 'SELECT track_genre, COUNT(*) FROM music GROUP BY track_genre'
+    df_genre_count = spark.sql(query)
+    df_genre_count.show()
+
     results = df_tracks_duration.toJSON().collect()
     df_tracks_duration.write.mode("overwrite").json("results")
     with open('results/data.json', 'w') as file:
         json.dump(results, file)
-
-    query = 'SELECT track_genre, COUNT(*) FROM music GROUP BY track_genre'
-    df_genre_count = spark.sql(query)
-    df_genre_count.show()
 
     spark.stop()

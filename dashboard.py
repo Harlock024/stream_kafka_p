@@ -47,7 +47,7 @@ def get_spark_results(url_results):
         st.error(f"Error {response.status_code}: No se pudieron obtener los datos.")
 
 def migrate_to_postgres():
-    url = "https://kafka-producer-postgres.onrender.com/trigger-producer/"
+    url = "https://kafka-producer-postgres.onrender.com/trigger-producer"
     try:
         response = requests.post(url)
         if response.status_code == 200:
