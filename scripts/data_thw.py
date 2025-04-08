@@ -1,6 +1,6 @@
-
 from pyspark.sql import SparkSession
 import json
+import os
 
 if __name__ == "__main__":
     # Crear sesión de Spark
@@ -21,12 +21,13 @@ if __name__ == "__main__":
     # Mostrar las canciones filtradas
     df_warning_tracks.show(20)
 
-    # Guardar los resultados en un archivo JSON
+    # Convertir a JSON y recolectar los resultados
     results = df_warning_tracks.toJSON().collect()
-    df_warning_tracks.write.mode("overwrite").json("results")
 
-    with open("results/data.json","w") as file:
+    output_file = 'results/data.json'
+    with open(output_file, 'w') as file:
         json.dump(results, file)
-    print(f"Archivo guardado en {file.name}")
+
+    print(f"Archivo guardado en {output_file}")
 
     spark.stop()
