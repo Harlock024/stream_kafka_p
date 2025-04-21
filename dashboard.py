@@ -1,3 +1,4 @@
+from re import S
 import streamlit as st
 import pandas as pd
 import requests
@@ -8,8 +9,15 @@ import json
 
 @st.cache_resource
 def init_connection():
-    return pymongo.MongoClient(st.secrets["mongo"]["uri"])
+    client= pymongo.MongoClient(st.secrets["mongo"]["uri"])
+    try:
+        client.admin.command('ping')
+        print("Pinged your deployment. You successfully connected to MongoDB!")
+    except Exception as e:
+        print(e)
+    return client
 client = init_connection()
+
 
 
 @st.cache_resource
@@ -18,12 +26,12 @@ def init_connection_postgres():
 conn = init_connection_postgres()
 
 @st.cache_data(ttl=600)
+
 def get_data_mongo():
-    db = client.people
-    items = db.spotify.find()
+    db = client.spotify
+    items = db.spoify.find()
     items = list(items)
     return items
-
 def get_spark_results(url_results):
     if not url_results.startswith("http"):
         st.error("La URL no es válida. Introduce una URL HTTP/HTTPS.")
@@ -48,6 +56,17 @@ def get_spark_results(url_results):
 
 def migrate_to_postgres():
     url = "https://kafka-producer-postgres.onrender.com/trigger-producer"
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            st.success("El proceso de Kafka ha sido activado correctamente.")
+        else:
+            st.error(f"Error al enviar a Kafka: {response.status_code}")
+    except Exception as e:
+        st.error(f"Ocurrió un error al intentar conectar con Kafka: {e}")
+
+def migrate_to_mongo():
+    url = "https://kafka-producer-mongo.onrender.com/trigger-producer"
     try:
         response = requests.post(url)
         if response.status_code == 200:
@@ -106,6 +125,9 @@ if st.button("GET spark results"):
 
 if st.button("Migrate data to Postgres"):
     migrate_to_postgres()
+
+if st.button("Migrate data to MongoDB"):
+    migrate_to_mongo()
 
 if st.button("Query mongodb collection"):
     items = get_data_mongo()
