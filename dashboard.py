@@ -5,18 +5,26 @@ import requests
 import pymongo
 import psycopg2
 import json
+import certifi
 
 
 @st.cache_resource
 def init_connection():
-    client= pymongo.MongoClient(st.secrets["mongo"]["uri"])
     try:
+        client = pymongo.MongoClient(
+            st.secrets["mongo"]["uri"],
+            tls=True,
+            tlsCAFile=certifi.where()
+        )
         client.admin.command('ping')
-        print("Pinged your deployment. You successfully connected to MongoDB!")
+        print("✅ Conectado a MongoDB Atlas exitosamente.")
+        return client
     except Exception as e:
-        print(e)
-    return client
+        print("❌ Error al conectar con MongoDB Atlas:", e)
+        return None
+
 client = init_connection()
+
 
 
 
@@ -28,10 +36,17 @@ conn = init_connection_postgres()
 @st.cache_data(ttl=600)
 
 def get_data_mongo():
-    db = client.spotify
-    items = db.spoify.find()
-    items = list(items)
-    return items
+    if not client:
+        st.error("No se pudo conectar a MongoDB Atlas.")
+        return []
+        try:
+              db = client.spotify
+              items = list(db.tracks.find())
+              return items
+        except Exception as e:
+              st.error(f"❌ Error al consultar MongoDB: {e}")
+              return []
+
 def get_spark_results(url_results):
     if not url_results.startswith("http"):
         st.error("La URL no es válida. Introduce una URL HTTP/HTTPS.")
@@ -131,8 +146,12 @@ if st.button("Migrate data to MongoDB"):
 
 if st.button("Query mongodb collection"):
     items = get_data_mongo()
-    for item in items:
-        st.write(item)
+    if items:
+        for item in items:
+            st.write(item)
+    else:
+        st.info("No se encontraron documentos o no se pudo conectar.")
+
 
 postgres_uri = st.secrets["postgres"]["uri"]
 
